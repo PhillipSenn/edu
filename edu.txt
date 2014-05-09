@@ -1,0 +1,2 @@
+This folder should not be defined in Dreamweaver.
+You should have a site for edu/edu and another one for edu/wwwroot.
