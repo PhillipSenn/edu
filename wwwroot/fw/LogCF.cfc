@@ -1,4 +1,5 @@
-component extends='ReadWhereDelete' {
+component {
+Variables.DataSource = 'fw'
 Variables.TableName = 'LogCF'
 Variables.TableSort = 'LogCFID DESC'
 Variables.MetaData = GetMetaData()
@@ -36,11 +37,12 @@ function Save() {
 	
 	local.svc = new query()
 	local.svc.setSQL('SELECT LogCFID = NEXT VALUE FOR LogCFID') // I'm having a hard time executing an update followed by a select in Railo.
+	local.svc.setDataSource(Variables.DataSource)
 	local.obj = local.svc.execute()
 	local.LogCFID = local.obj.getResult().LogCFID
 
 	local.sql = '
-	DECLARE @DomainID Int = #Val(Application.Domain.qry.DomainID)#
+	DECLARE @DomainID Int = #Val(Application.fw.DomainID)#
 	DECLARE @LogCFID BigInt = #Val(local.LogCFID)#
 	DECLARE @LogCFSort Int = #Val(request.fw.log.Sort)#
 	DECLARE @LogCFElapsed Int = #GetTickCount() - request.fw.TickCount#
@@ -72,6 +74,7 @@ function Save() {
 	local.svc.addParam(cfsqltype='cf_sql_varchar',value=local.LogCFForm)
 	local.svc.addParam(cfsqltype='cf_sql_varchar',value=local.LogCFSession)
 	local.svc.addParam(cfsqltype='cf_sql_varchar',value=Left(local.RemoteAddr,15))
+	local.svc.setDataSource(Variables.DataSource)
 	local.svc.execute()
 	return local.LogCFID // For: LogCFErr_LogCFID
 }

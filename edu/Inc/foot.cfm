@@ -10,5 +10,7 @@
 	<script src="//cdn.PhillipSenn.com/bootstrap-3.1.1-dist/js/bootstrap.js"></script>
 	<script src="//cdn.PhillipSenn.com/js/consolelog.js"></script> <!--- patik.com/blog/complete-cross-browser-console-log --->
 	<script src="#Application.fw.Path#Inc/js/dom.js"></script>
+	<script src="#Application.fw.Path#Inc/js/LogJS.js"></script> <!--- Uses /edu/ --->
+	<script src="#Application.fw.Path#Inc/js/LogUI.js"></script> <!--- Uses /edu/ --->
 </cfif>
 </cfoutput>

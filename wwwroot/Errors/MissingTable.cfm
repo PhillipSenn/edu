@@ -1,14 +1,13 @@
 <cfscript>
+new com.MissingTable().Where()
 </cfscript>
 
 <cfoutput>
 <cfinclude template="/Inc/html.cfm">
 <cfinclude template="/Inc/body.cfm">
-<ul>
-	<li><a href="Errors/MissingTable.cfm">Missing Table</a></li>
-	<li><a href="Log/LogJS.cfm">LogJS</a></li>
-	<li><a href="Log/LogUI.cfm">LogUI</a></li>
-</ul>
+This did a:
+<pre>SELECT * FROM X
+</pre>
 <cfinclude template="/Inc/foot.cfm">
 <cfinclude template="/Inc/End.cfm">
 </cfoutput>

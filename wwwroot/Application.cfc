@@ -1,19 +1,22 @@
 component {
-this.Name = "edu";
+this.Name = "edu"
 this.DataSource = "edu"
 this.SessionManagement = true
 this.ScriptProtect = "all"
-//this.currentTemplatePath = GetCurrentTemplatePath()
-//this.directoryFromPath = GetDirectoryFromPath(this.currentTemplatePath)
 this.TemplatePath = GetTemplatePath()
 this.mappings['com'] = 'c:\home\PhillipSenn.com\edu\com\'
 this.mappings['Inc'] = 'c:\home\PhillipSenn.com\edu\Inc\'
+
+this.currentTemplatePath = GetCurrentTemplatePath()
+this.directoryFromPath = GetDirectoryFromPath(this.currentTemplatePath)
+this.mappings['fw'] = this.directoryFromPath & 'fw\'
 
 public boolean function onApplicationStart() {
 	Application.fw = {}
 	Application.fw.name='edu - Education'
 	Application.fw.Path = '/edu/'
 	Application.fw.msg = ''
+	Application.fw.msgClass = 'label-info'
 
 	Application.fw.log = {}
 	Application.fw.log.CF  = true
@@ -36,13 +39,17 @@ public boolean function onApplicationStart() {
 	Application.fw.css= true // This get duplicated in the session scope
 	Application.fw.hidden = false // Hide #main until the page has loaded.
 
-	Application.fw.Domain = new com.Domain().WhereDomainName() 
+	Application.fw.DomainID = 0 // For logging the next command
+	Application.fw.log.Sort = 0 // For logging the next command
+	Application.fw.tickCount = GetTickCount() // For logging the next command
+	request.fw = Duplicate(Application.fw) // fw.try, fw.log
+	Application.fw.DomainID = new com.Domain().WhereDomainName() 
 	return true
 }
 
 public void function onSessionStart() {
 	session.fw = Duplicate(Application.fw)
-	session.fw.log.Sort = 0
+	request.fw = Duplicate(Application.fw)
 }
 
 public boolean function onRequestStart(String targetPage) {
@@ -67,6 +74,9 @@ public boolean function onRequestStart(String targetPage) {
 			}
 		}
 	}
+	request.fw.LogCFID = new fw.LogCF().Save() // This is for LogDB
+	session.fw.LogCFID = request.fw.LogCFID // These are for LogUI and LogJS.
+	session.fw.TickCount = GetTickCount() // I put it these the session scope so that they can't be gamed.
 	setting showDebugoutput = false;
 	if (IsDefined('session.Usr.qry')) {
 		//

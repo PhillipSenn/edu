@@ -1,4 +1,5 @@
-component extends="ReadWhereDelete" {
+component {
+Variables.DataSource = 'fw'
 Variables.TableName = "LogDBErr"
 Variables.TableSort = "LogDBErrID DESC"
 Variables.MetaData = GetMetaData()
@@ -15,8 +16,8 @@ function Save(arg) { // arg was the local scope when passed.  So arg.result was 
 	}
 	local.result.Prefix.RecordCount = 0
 	local.result.Prefix.ExecutionTime = 0
-	local.LogDBFunctionName	= arg.LogDBFunctionName
-	local.LogDBID = new com.LogDB().Save(local)
+	local.fw.FunctionCalledName = arg.fw.FunctionCalledName
+	local.LogDBID = new fw.LogDB().Save(local)
 
 	// ErrorCode and SQLState are Integers
 	if (StructKeyExists(arg.result.Exception,"NativeErrorCode")) {
@@ -59,7 +60,7 @@ function Save(arg) { // arg was the local scope when passed.  So arg.result was 
 //		local.LogDBErrWhere = "arg.result.Exception.where"
 //	}
 	local.sql = "
-	DECLARE @DomainID Int = #Val(Application.Domain.qry.DomainID)#
+	DECLARE @DomainID Int = #Val(Application.fw.DomainID)#
 	DECLARE @LogDBErrID Int = NEXT VALUE FOR LogDBErrID
 	DECLARE @LogDBID Int = #Val(local.LogDBID)#
 	DECLARE @LogDBErrSort Int = #Val(request.fw.log.Sort)#
@@ -81,73 +82,87 @@ function Save(arg) { // arg was the local scope when passed.  So arg.result was 
 	"
 	local.svc = new query()
 	local.svc.setSQL(local.sql)
-	local.svc.addParam(cfsqltype="CF_SQL_VARCHAR",value=local.LogDBErrType)
-	local.svc.addParam(cfsqltype="CF_SQL_VARCHAR",value=local.LogDBErrName)
-	local.svc.addParam(cfsqltype="CF_SQL_VARCHAR",value=local.LogDBErrDesc)
+	local.svc.addParam(cfsqltype="cf_sql_varchar",value=local.LogDBErrType)
+	local.svc.addParam(cfsqltype="cf_sql_varchar",value=local.LogDBErrName)
+	local.svc.addParam(cfsqltype="cf_sql_varchar",value=local.LogDBErrDesc)
+	local.svc.setDataSource(Variables.DataSource)
 	local.svc.execute()
 
-	WriteOutput('<html>' & Chr(10))
-	WriteOutput('<body>' & Chr(10))
-	WriteOutput('It looks like you got the following error:<pre>' & arg.result.Exception.Detail & '</pre>' & Chr(10))
-	if (IsDefined('request.fw.mail') && request.fw.mail) {
-		local.svc = new mail()
-		local.svc.setSubject(Application.fw.Name & ': ' & ListLast(GetBaseTemplatePath(),'\'))
-		local.msg  = ''
-		if (StructKeyExists(arg.result.Exception,"Datasource")) {
-			local.msg &= 'Datasource: ' & arg.result.Exception.datasource & '<br>'
+	if (arg.fw.try.abort) {
+		WriteOutput('<html>' & Chr(10))
+		WriteOutput('<body>' & Chr(10))
+		WriteOutput('It looks like you got the following database error:<pre>' & arg.result.Exception.Detail & '</pre>' & Chr(10))
+		if (arg.fw.try.email != '') {
+			local.svc = new mail()
+			local.svc.setSubject(Application.fw.Name & ': ' & ListLast(GetBaseTemplatePath(),'\'))
+			local.msg  = ''
+			if (StructKeyExists(arg.result.Exception,"Datasource")) {
+				local.msg &= 'Datasource: ' & arg.result.Exception.datasource & '<br>'
+			}
+			if (StructKeyExists(arg.result.Exception,"Detail")) {
+				local.msg &= 'Detail: ' & arg.result.Exception.Detail & '<br>'
+			}
+			if (StructKeyExists(arg.result.Exception,"Detail")) {
+				local.msg &= 'ErrorCode: ' & arg.result.Exception.ErrorCode & '<br>'
+			}
+			if (StructKeyExists(arg.result.Exception,"Message")) {
+				local.msg &= 'Message: ' & arg.result.Exception.message & '<br>'
+			}
+			if (StructKeyExists(arg.result.Exception,"NativeErrorCode")) {
+				local.msg &= 'NativeErrorCode: ' & arg.result.Exception.NativeErrorCode & '<br>'
+			}
+			if (StructKeyExists(arg.result.Exception,"SQLState")) {
+				local.msg &= 'SQLState: ' & arg.result.Exception.SQLState & '<br>'
+			}
+			// local.msg &= 'StackTrace: ' & arg.result.Exception.StackTrace & '<br>'
+			if (StructKeyExists(arg.result.Exception,"Type")) {
+				local.msg &= 'Type: ' & arg.result.Exception.Type & '<br>'
+			}
+			if (StructKeyExists(arg.result.Exception,"QueryError")) {
+				local.msg &= 'QueryError: ' & arg.result.Exception.QueryError & '<br>'
+			}
+			/*
+			if (StructKeyExists(arg.result.Exception,"Where") && arg.result.Exception != '') {
+				local.msg &= 'Where: ' & arg.result.Exception.Where & '<br>'
+			}
+			*/
+			local.msg &= '<p>'
+			local.msg &= 'Application: ' & Application.fw.Name & '<br>'
+			local.msg &= 'SCRIPT_NAME: ' & cgi.SCRIPT_NAME & '<br>'
+			local.msg &= 'CurrentTmpl: ' & GetCurrentTemplatePath() & '<br>'
+			local.msg &= '</p>'
+			if (StructKeyExists(arg.result.Exception,"sql")) {
+				local.msg &= '<pre>' & arg.result.Exception.sql & '</pre>'
+			} else {
+				local.msg &= '<pre>arg.result.Exception.sql is empty.</pre>'
+			}
+			local.svc.setBody(local.msg)
+
+			local.port=465
+			local.server='smtp.gmail.com'
+			local.type='html'
+			local.useSSL=true
+			local.svc.setServer(local.Server)
+			local.svc.setType(local.Type)
+			local.svc.setUseSSL(local.UseSSL)
+			local.svc.setPort(local.Port)
+
+			var UserName='PhillipSenn@gmail.com'
+			var Password = ''
+			include "/Inc/Passwords/Email.cfm"
+			local.svc.setFrom(UserName)
+			local.svc.setTo('Administrator<#UserName#>')
+			local.svc.setUserName(UserName)
+			local.svc.setPassword(Password)
+			local.svc.Send()
+			WriteOutput("<p>I've sent an email to the administrator to let them know.</p>" & Chr(10))
 		}
-		if (StructKeyExists(arg.result.Exception,"Detail")) {
-			local.msg &= 'Detail: ' & arg.result.Exception.Detail & '<br>'
-		}
-		if (StructKeyExists(arg.result.Exception,"Detail")) {
-			local.msg &= 'ErrorCode: ' & arg.result.Exception.ErrorCode & '<br>'
-		}
-		if (StructKeyExists(arg.result.Exception,"Message")) {
-			local.msg &= 'Message: ' & arg.result.Exception.message & '<br>'
-		}
-		if (StructKeyExists(arg.result.Exception,"NativeErrorCode")) {
-			local.msg &= 'NativeErrorCode: ' & arg.result.Exception.NativeErrorCode & '<br>'
-		}
-		if (StructKeyExists(arg.result.Exception,"SQLState")) {
-			local.msg &= 'SQLState: ' & arg.result.Exception.SQLState & '<br>'
-		}
-		// local.msg &= 'StackTrace: ' & arg.result.Exception.StackTrace & '<br>'
-		if (StructKeyExists(arg.result.Exception,"Type")) {
-			local.msg &= 'Type: ' & arg.result.Exception.Type & '<br>'
-		}
-		if (StructKeyExists(arg.result.Exception,"QueryError")) {
-			local.msg &= 'QueryError: ' & arg.result.Exception.QueryError & '<br>'
-		}
-		if (StructKeyExists(arg.result.Exception,"Where") && arg.result.Exception != '') {
-			local.msg &= 'Where: ' & arg.result.Exception.Where & '<br>'
-		}
-		local.msg &= '<p>'
-		local.msg &= 'Application: ' & Application.fw.Name & '<br>'
-		local.msg &= 'SCRIPT_NAME: ' & cgi.SCRIPT_NAME & '<br>'
-		local.msg &= 'CurrentTmpl: ' & GetCurrentTemplatePath() & '<br>'
-		local.msg &= '</p>'
-		if (StructKeyExists(arg.result.Exception,"sql")) {
-			local.msg &= '<pre>' & arg.result.Exception.sql & '</pre>'
-		} else {
-			local.msg &= '<pre>arg.result.Exception.sql is empty.</pre>'
-		}
-		local.svc.setBody(local.msg)
-		include "/Passwords/FrameworkZero.cfm"
-		local.svc.setServer(local.Server)
-		local.svc.setType(local.Type)
-		local.svc.setUseSSL(local.UseSSL)
-		local.svc.setPort(local.Port)
-		local.svc.setFrom(local.UserName)
-		local.svc.setUserName(local.UserName)
-		local.svc.setPassword(local.Password)
-	
-	
-		local.svc.setTo('Administrator<#local.UserName#>')
-		// local.svc.Send()
-		WriteOutput("<p>I've sent an email to the administrator to let them know.</p>" & Chr(10))
+		WriteOutput('</body>' & Chr(10))
+		WriteOutput('</html>')
+		abort;
+	} else {
+		request.fw.msg = arg.result.Exception.Detail
+		request.fw.msgClass = arg.fw.try.class
 	}
-	WriteOutput('</body>' & Chr(10))
-	WriteOutput('</html>')
-	abort;
 }
 }

@@ -1,4 +1,5 @@
-component extends="ReadWhereDelete" {
+component {
+Variables.DataSource = 'fw'
 Variables.TableName = "LogDB"
 Variables.TableSort = "LogDBID DESC"
 Variables.MetaData = GetMetaData()
@@ -30,6 +31,7 @@ function Save(arg) {
 
 	local.svc = new query()
 	local.svc.setSQL('SELECT LogDBID = NEXT VALUE FOR LogDBID') // I'm having a hard time executing an update followed by a select in Railo.
+	local.svc.setDataSource(Variables.DataSource)
 	local.obj = local.svc.execute()
 	local.LogDBID = local.obj.getResult().LogDBID
 
@@ -39,7 +41,7 @@ function Save(arg) {
 		local.LogCFID = 0
 	}
 	local.sql = "
-	DECLARE @DomainID Int = #Val(Application.Domain.qry.DomainID)#
+	DECLARE @DomainID Int = #Val(Application.fw.DomainID)#
 	DECLARE @LogDBID Int = #Val(local.LogDBID)#
 	DECLARE @LogDBSort Int = #Val(request.fw.log.Sort)#
 	DECLARE @LogDBElapsed Int = #GetTickCount() - request.fw.TickCount#
@@ -62,9 +64,10 @@ function Save(arg) {
 	"
 	local.svc = new query()
 	local.svc.setSQL(local.sql)
-	local.svc.addParam(cfsqltype="CF_SQL_VARCHAR",value=local.LogDBComponentName)
-	local.svc.addParam(cfsqltype="CF_SQL_VARCHAR",value=arg.LogDBFunctionName)
-	local.svc.addParam(cfsqltype="CF_SQL_VARCHAR",value=local.LogDBName)
+	local.svc.addParam(cfsqltype="cf_sql_varchar",value=local.LogDBComponentName)
+	local.svc.addParam(cfsqltype="cf_sql_varchar",value=arg.fw.FunctionCalledName)
+	local.svc.addParam(cfsqltype="cf_sql_varchar",value=local.LogDBName)
+	local.svc.setDataSource(Variables.DataSource)
 	local.svc.execute() // Notice that there's no error trapping on the log here.  hmmm... probably need to fix.
 
 	/*
@@ -76,6 +79,7 @@ function Save(arg) {
 	"
 	local.svc = new query()
 	local.svc.setSQL(local.sql)
+	local.svc.setDataSource(Variables.DataSource)
 	local.obj = local.svc.execute()
 	local.result.qry = local.obj.getResult()
 	local.result.Prefix = local.obj.getPrefix()

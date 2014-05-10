@@ -1,4 +1,5 @@
-component extends="ReadWhereDelete" {
+component {
+Variables.DataSource = 'fw'
 Variables.TableName = "LogCFC";
 Variables.TableSort = "LogCFCID DESC";
 Variables.MetaData = GetMetaData();
@@ -13,7 +14,7 @@ function Save(arg) {
 	}
 
 	local.sql = "
-	DECLARE @DomainID Int = #Val(Application.Domain.qry.DomainID)#
+	DECLARE @DomainID Int = #Val(Application.fw.DomainID)#
 	DECLARE @LogCFCID Int = NEXT VALUE FOR LogCFCID
 	DECLARE @LogDBSort Int = #Val(request.fw.log.Sort)#;
 	DECLARE @LogCFCElapsed Int = #GetTickCount() - request.fw.TickCount#;
@@ -31,8 +32,9 @@ function Save(arg) {
 	";
 	local.svc = new query();
 	local.svc.setSQL(local.sql);
-	local.svc.addParam(cfsqltype="CF_SQL_VARCHAR",value=arg.LogCFCName);
-	local.svc.addParam(cfsqltype="CF_SQL_VARCHAR",value=arg.LogCFCDesc);
+	local.svc.addParam(cfsqltype="cf_sql_varchar",value=arg.LogCFCName);
+	local.svc.addParam(cfsqltype="cf_sql_varchar",value=arg.LogCFCDesc);
+	local.svc.setDataSource(Variables.DataSource)
 	local.svc.execute();
 	// local.result.qry = local.obj.getResult();
 	// local.result.Prefix = local.obj.getPrefix();
