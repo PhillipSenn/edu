@@ -1,0 +1,51 @@
+@import url('/fw/bootstrap-3.1.1-dist/css/bootstrap.css');
+body {
+	padding-top:79px;
+	font-family:"Times New Roman", Times, serif;
+	font-size:20px;
+}
+fieldset {
+	border-radius:7px;
+}
+legend {
+	padding-left:.5em;
+	padding-right:.5em;
+}
+.form-control {
+	font-size:20px;
+}
+img {
+	max-width:100%;
+}
+p {
+	margin-top:16px;
+	margin-bottom:16px;
+}
+th.num, td.num, th.date, td.date { /* th.date tells sortable.js to sort by data-date */
+	text-align:right;
+}
+#msg {
+	height:28px;
+}
+.navbar {
+	margin-bottom:0px;
+}
+.noContainer {
+	margin-left:1em;
+	margin-right:1em;
+}
+.navbar-fixed-top .navbar-header {
+	height:42px;
+}
+.navbar-brand {
+	padding-left:0px;
+}
+
+/* Begin Railo (pronounced Rhylo) */
+table.cfdebug {
+	margin-left:1em;
+}
+.cfdebug {
+	font-size:20px !important;
+}
+/* End Railo (pronounced Rhylo) */
