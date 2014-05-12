@@ -1,8 +1,8 @@
 component {
-Variables.DataSource = 'fw'
-Variables.MetaData = GetMetaData()
+Variables.fw.DataSource = 'fw'
 
 remote function Save() {
+	include '/Inc/newQuery.cfm'
 	local.LogUIName = ReplaceNoCase(cgi.HTTP_REFERER,'http://www.phillipsenn.com','')
 	if (FindNoCase(Application.fw.Path,local.LogUIName) == 1) {
 		local.LogUIName = Mid(local.LogUIName,Len(Application.fw.Path),128)
@@ -25,8 +25,8 @@ remote function Save() {
 		local.LogCFID = 0
 	}
 	local.sql = "
-	DECLARE @LogUIID Int = NEXT VALUE FOR LogUIID
-	DECLARE @LogCFID Int = #Val(local.LogCFID)#
+	DECLARE @LogUIID BigInt = NEXT VALUE FOR LogUIID
+	DECLARE @LogCFID BigInt = #Val(local.LogCFID)#
 	DECLARE @LogJSSort Int = #Val(arguments.LogJSSort)#
 	DECLARE @LogUIElapsed Int = #GetTickCount() - local.TickCount#
 	UPDATE LogUI SET
@@ -43,8 +43,6 @@ remote function Save() {
 	,LogUIValue=?
 	WHERE LogUIID = @LogUIID
 	"
-	local.svc = new query()
-	local.svc.setSQL(local.sql)
 	local.svc.addParam(cfsqltype='cf_sql_varchar',value=local.LogUIName)
 	local.svc.addParam(cfsqltype='cf_sql_varchar',value=arguments.LogUITag,MaxLength=6) // anchor, button, check
 	local.svc.addParam(cfsqltype='cf_sql_varchar',value=arguments.LogUITagName)
@@ -52,8 +50,8 @@ remote function Save() {
 	local.svc.addParam(cfsqltype='cf_sql_varchar',value=local.LogUIClass)
 	local.svc.addParam(cfsqltype='cf_sql_varchar',value=arguments.LogUIDestination)
 	local.svc.addParam(cfsqltype='cf_sql_varchar',value=arguments.LogUIValue)
-	local.svc.setDataSource(Variables.DataSource)
-	local.svc.execute()
+	local.fw.log.db = false
+	include '/Inc/execute.cfm'
 	// Don't forget to put local.dataType = 'text' in the JavaScript!
 }
 }

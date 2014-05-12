@@ -4,18 +4,18 @@ for (i=1; i<=ArrayLen(local.arr); i++) {
 	local.myObj = local.arr[i]
 	local.myValue = local.myObj.value
 	if (Find('--',local.myValue)) {
-		request.fw.msg = 'Comments are not allowed.'
+		request.fw.msg = 'Comments are not allowed in: ' & HTMLCodeFormat(local.myValue)
 		return
 	}
-	if (Find('',local.myValue)) {
-		request.fw.msg = 'Semicolons are not allowed.'
-		return
-	}
+//	if (Find(';',local.myValue)) {
+//		request.fw.msg = 'Semicolons are not allowed.'
+//		return
+//	}
+}
+if (IsDefined('local.fw.DataSource')) {
+	local.svc.setDataSource(local.fw.DataSource)
 }
 
-if (IsDefined('Variables.Metadata')) {
-	local.Metadata = Variables.Metadata // not sure what this is
-}
 local.svc.setSQL(local.sql)
 if (local.fw.try.catch) {
 	try {
@@ -60,9 +60,9 @@ if (local.fw.try.catch) {
 			if (IsDefined('request.fw.LogCFID')) {
 				local.LogCFID = request.fw.LogCFID
 			} else {
-				local.LogCFID = new fw.LogCF().Save()
+				local.LogCFID = new com.LogCF().Save()
 			}
-			new fw.LogDBErr().Save(local)
+			new com.LogDBErr().Save(local)
 		}
 	} finally {
 	}
@@ -73,7 +73,7 @@ if (local.fw.try.catch) {
 }
 if (local.fw.log.db) { // If we are logging this database call. This gives me the chance to turn it off at the local scope.
 	if (IsDefined('local.result.Prefix')) {
-		new fw.LogDB().Save(local)
+		new com.LogDB().Save(local)
 	}
 }
 </cfscript>

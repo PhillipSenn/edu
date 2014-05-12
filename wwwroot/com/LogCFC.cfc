@@ -1,10 +1,8 @@
 component {
-Variables.DataSource = 'fw'
-Variables.TableName = "LogCFC";
-Variables.TableSort = "LogCFCID DESC";
-Variables.MetaData = GetMetaData();
+Variables.fw.DataSource = 'fw'
 
 function Save(arg) {
+	include '/Inc/newQuery.cfm'
 	request.fw.log.Sort += 1; // I use the same counter for LogDB, LogDBErr, LogCF, LogCFErr, LogCFC
 	// local.LogCFCName = ReplaceNoCase(arg.LogCFCName,Application.fw.Path,'');
 	if (IsDefined("request.fw.LogCFID")) {
@@ -14,11 +12,11 @@ function Save(arg) {
 	}
 
 	local.sql = "
+	DECLARE @LogCFCID BigInt = NEXT VALUE FOR LogCFCID
 	DECLARE @DomainID Int = #Val(Application.fw.DomainID)#
-	DECLARE @LogCFCID Int = NEXT VALUE FOR LogCFCID
 	DECLARE @LogDBSort Int = #Val(request.fw.log.Sort)#;
 	DECLARE @LogCFCElapsed Int = #GetTickCount() - request.fw.TickCount#;
-	DECLARE @LogCFID Int = #Val(local.LogCFID)#;
+	DECLARE @LogCFID BigInt = #Val(local.LogCFID)#;
 	
 	UPDATE LogCFC SET
 	 LogCFC_DomainID  = @DomainID
@@ -34,9 +32,7 @@ function Save(arg) {
 	local.svc.setSQL(local.sql);
 	local.svc.addParam(cfsqltype="cf_sql_varchar",value=arg.LogCFCName);
 	local.svc.addParam(cfsqltype="cf_sql_varchar",value=arg.LogCFCDesc);
-	local.svc.setDataSource(Variables.DataSource)
-	local.svc.execute();
-	// local.result.qry = local.obj.getResult();
-	// local.result.Prefix = local.obj.getPrefix();
+	local.fw.log.db = false
+	include '/Inc/execute.cfm'
 }
 }

@@ -1,8 +1,5 @@
 component {
-Variables.DataSource = 'fw'
-Variables.TableName = 'LogCF'
-Variables.TableSort = 'LogCFID DESC'
-Variables.MetaData = GetMetaData()
+Variables.fw.DataSource = 'fw'
 
 function Save() {
 	request.fw.log.Sort += 1 // I use the same counter for LogDB, LogDBErr, LogCF, LogCFErr
@@ -14,20 +11,20 @@ function Save() {
 	// local.LogCFCookies     = getPageContext().getRequest().getHeader('Cookie')
 	local.LogCFUserAgent   = getPageContext().getRequest().getHeader('User-Agent')
 	savecontent variable='local.LogCFURL' { 
-		dump(var=url,format='text',top=3,metainfo=false)
+		// dump(var=url,format='text',top=3,metainfo=false)
 	}
 	if (Find('struct [empty]',local.LogCFURL)) {
 		local.LogCFURL = ''
 	}
 	savecontent variable='local.LogCFForm' { 
-		dump(var=form,format='text',top=3,metainfo=false)
+		// dump(var=form,format='text',top=3,metainfo=false)
 	}
 	if (Find('struct [empty]',local.LogCFForm)) {
 		local.LogCFForm = ''
 	}
 
 	savecontent variable='local.LogCFSession' { 
-		dump(var=session,format='text',top=3,metainfo=false)
+		// dump(var=session,format='text',top=3,metainfo=false)
 	}
 	if (IsDefined('session.Usr.qry.UsrID')) {
 		local.UsrID = session.Usr.qry.UsrID
@@ -37,13 +34,14 @@ function Save() {
 	
 	local.svc = new query()
 	local.svc.setSQL('SELECT LogCFID = NEXT VALUE FOR LogCFID') // I'm having a hard time executing an update followed by a select in Railo.
-	local.svc.setDataSource(Variables.DataSource)
+	local.svc.setDataSource(Variables.fw.DataSource)
 	local.obj = local.svc.execute()
 	local.LogCFID = local.obj.getResult().LogCFID
 
+	include '/Inc/newQuery.cfm'
 	local.sql = '
-	DECLARE @DomainID Int = #Val(Application.fw.DomainID)#
 	DECLARE @LogCFID BigInt = #Val(local.LogCFID)#
+	DECLARE @DomainID Int = #Val(Application.fw.DomainID)#
 	DECLARE @LogCFSort Int = #Val(request.fw.log.Sort)#
 	DECLARE @LogCFElapsed Int = #GetTickCount() - request.fw.TickCount#
 	DECLARE @UsrID Int = #Val(local.UsrID)#
@@ -64,8 +62,6 @@ function Save() {
 	,RemoteAddr=?
 	WHERE LogCFID = @LogCFID
 	'
-	local.svc = new query()
-	local.svc.setSQL(local.sql)
 	local.svc.addParam(cfsqltype='cf_sql_varchar',value=local.LogCFOutString)
 	local.svc.addParam(cfsqltype='cf_sql_varchar',value=Left(local.LogCFQueryString,512))
 	local.svc.addParam(cfsqltype='cf_sql_varchar',value=Left(local.LogCFName,512))
@@ -74,8 +70,8 @@ function Save() {
 	local.svc.addParam(cfsqltype='cf_sql_varchar',value=local.LogCFForm)
 	local.svc.addParam(cfsqltype='cf_sql_varchar',value=local.LogCFSession)
 	local.svc.addParam(cfsqltype='cf_sql_varchar',value=Left(local.RemoteAddr,15))
-	local.svc.setDataSource(Variables.DataSource)
-	local.svc.execute()
+	local.fw.log.db = false
+	include '/Inc/Execute.cfm'
 	return local.LogCFID // For: LogCFErr_LogCFID
 }
 }

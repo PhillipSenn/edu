@@ -1,5 +1,5 @@
 component {
-Variables.DataSource = 'fw'
+Variables.fw.DataSource = 'fw'
 
 function GrandUnification(form) {
 	/*

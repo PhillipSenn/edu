@@ -1,5 +1,4 @@
 component {
-Variables.MetaData = GetMetaData();
 
 function Read(arg) {
 	if (IsSimpleValue(arg)) {

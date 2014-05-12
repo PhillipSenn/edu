@@ -1,15 +1,9 @@
 component {
-Variables.DataSource = 'fw'
-Variables.TableName = "LogDBErr"
-Variables.TableSort = "LogDBErrID DESC"
-Variables.MetaData = GetMetaData()
+Variables.fw.DataSource = 'fw'
 
 function Save(arg) { // arg was the local scope when passed.  So arg.result was local.result.
 	request.fw.log.Sort += 1
 
-	if (IsDefined("arg.MetaData.FullName")) {
-		local.MetaData = arg.MetaData
-	}
 	local.result.Prefix = {}
 	if (StructKeyExists(arg.result.Exception,"sql")) {
 		local.result.Prefix.sql = arg.result.Exception.sql
@@ -17,7 +11,7 @@ function Save(arg) { // arg was the local scope when passed.  So arg.result was 
 	local.result.Prefix.RecordCount = 0
 	local.result.Prefix.ExecutionTime = 0
 	local.fw.FunctionCalledName = arg.fw.FunctionCalledName
-	local.LogDBID = new fw.LogDB().Save(local)
+	local.LogDBID = new com.LogDB().Save(local)
 
 	// ErrorCode and SQLState are Integers
 	if (StructKeyExists(arg.result.Exception,"NativeErrorCode")) {
@@ -61,8 +55,8 @@ function Save(arg) { // arg was the local scope when passed.  So arg.result was 
 //	}
 	local.sql = "
 	DECLARE @DomainID Int = #Val(Application.fw.DomainID)#
-	DECLARE @LogDBErrID Int = NEXT VALUE FOR LogDBErrID
-	DECLARE @LogDBID Int = #Val(local.LogDBID)#
+	DECLARE @LogDBErrID BigInt = NEXT VALUE FOR LogDBErrID
+	DECLARE @LogDBID BigInt = #Val(local.LogDBID)#
 	DECLARE @LogDBErrSort Int = #Val(request.fw.log.Sort)#
 	DECLARE @LogDBErrElapsed Int = #GetTickCount() - request.fw.TickCount#
 	DECLARE @LogDBErrCode Int = #Val(local.LogDBErrCode)#
@@ -80,13 +74,12 @@ function Save(arg) { // arg was the local scope when passed.  So arg.result was 
 	,LogDBErrDesc=?
 	WHERE LogDBErrID=@LogDBErrID
 	"
-	local.svc = new query()
-	local.svc.setSQL(local.sql)
+	include '/Inc/newQuery.cfm'
 	local.svc.addParam(cfsqltype="cf_sql_varchar",value=local.LogDBErrType)
 	local.svc.addParam(cfsqltype="cf_sql_varchar",value=local.LogDBErrName)
 	local.svc.addParam(cfsqltype="cf_sql_varchar",value=local.LogDBErrDesc)
-	local.svc.setDataSource(Variables.DataSource)
-	local.svc.execute()
+	local.fw.log.db = false
+	include '/Inc/execute.cfm'
 
 	if (arg.fw.try.abort) {
 		WriteOutput('<html>' & Chr(10))

@@ -1,8 +1,8 @@
 component {
-Variables.DataSource = 'fw'
-Variables.MetaData = GetMetaData()
+Variables.fw.DataSource = 'fw'
 
-remote function Save() returnformat="plain" {
+remote function Save() {
+	include '/Inc/newQuery.cfm'
 	if (isDefined("session.fw.LogCFID")) {
 		local.LogCFID = session.fw.LogCFID
 	} else {
@@ -14,8 +14,8 @@ remote function Save() returnformat="plain" {
 		local.TickCount = GetTickCount()
 	}
 	local.sql = "
-	DECLARE @LogJSID Int = NEXT VALUE FOR LogJSID
-	DECLARE @LogCFID Int = #Val(local.LogCFID)#
+	DECLARE @LogJSID BigInt = NEXT VALUE FOR LogJSID
+	DECLARE @LogCFID BigInt = #Val(local.LogCFID)#
 	DECLARE @LogJSSort Int = #Val(arguments.LogJSSort)#
 	DECLARE @LogJSElapsed Int = #GetTickCount() - local.TickCount#
 	UPDATE LogJS SET
@@ -28,12 +28,10 @@ remote function Save() returnformat="plain" {
 	,LogJSPathName = ?
 	WHERE LogJSID = @LogJSID
 	"
-	local.svc = new query()
-	local.svc.setSQL(local.sql)
 	local.svc.addParam(cfsqltype="cf_sql_varchar",value=Left(arguments.LogJSName,512))
 	local.svc.addParam(cfsqltype="cf_sql_varchar",value=arguments.LogJSDesc)
 	local.svc.addParam(cfsqltype="cf_sql_varchar",value=Left(arguments.LogJSPathName,512))
-	local.svc.setDataSource(Variables.DataSource)
-	local.svc.execute() // No error trapping
+	local.fw.log.db = false
+	include '/Inc/execute.cfm'
 }
 }
